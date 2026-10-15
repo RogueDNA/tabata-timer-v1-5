@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tabata Timer V1.2</title>
+
+<style>
+    :root{
+        --bg:#101214;
+        --card:#1b1f23;
+        --text:#f5f7f8;
+        --muted:#aab1b8;
+        --accent:#48d597;
+        --danger:#ff6b6b;
+    }
+    *{box-sizing:border-box}
+    body{
+        margin:0;
+        font-family:Arial, sans-serif;
+        background:var(--bg);
+        color:var(--text);
+    }
+    .container{
+        max-width:900px;
+        margin:0 auto;
+        padding:20px;
+    }
+    h1{
+        font-size:28px;
+        text-align:center;
+        margin-bottom:16px;
+    }
+    .section{
+        background:var(--card);
+        padding:18px;
+        border-radius:14px;
+        margin-bottom:18px;
+    }
+    .section h2{
+        margin-top:0;
+        text-align:center;
+    }
+    .center{
+        text-align:center;
+    }
+    label{
+        display:block;
+        margin-top:10px;
+        font-size:14px;
+        color:var(--muted);
+        text-align:left;
+    }
+    input{
+        width:100%;
+        padding:10px;
+        margin-top:4px;
+        border-radius:8px;
+        border:1px solid #3a4148;
+        background:#111417;
+        color:#fff;
+        font-size:16px;
+    }
+    .timer-display{
+        text-align:center;
+        margin-bottom:10px;
+    }
+    .timer-main{
+        font-size:48px;
+        font-weight:700;
+    }
+    .timer-sub{
+        font-size:16px;
+        color:var(--muted);
+    }
+    .buttons{
+        display:flex;
+        flex-wrap:wrap;
+        justify-content:center;
+        gap:10px;
+        margin-top:12px;
+    }
+    button{
+        padding:12px 18px;
+        border-radius:10px;
+        border:0;
+        cursor:pointer;
+        font-size:16px;
+        min-width:110px;
+    }
+    .primary{background:var(--accent);color:#07130e;}
+    .secondary{background:#30363c;color:#fff;}
+    .danger{background:#402326;color:#ffb8b8;}
+    .toggle-row{
+        text-align:center;
+        margin-top:10px;
+        font-size:14px;
+    }
+    .exercise-item{
+        background:#111417;
+        padding:10px;
+        border-radius:10px;
+        margin-bottom:8px;
+        text-align:left;
+    }
+    .exercise-header{
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        gap:8px;
+    }
+    .exercise-name{
+        font-weight:600;
+    }
+    .saved-item{
+        background:#111417;
+        padding:12px;
+        border-radius:10px;
+        margin-bottom:10px;
+        text-align:left;
+    }
+    .saved-actions{
+        margin-top:8px;
+        display:flex;
+        gap:8px;
+        flex-wrap:wrap;
+    }
+    .grid-two{
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:10px;
+    }
+    @media(max-width:700px){
+        .container{padding:14px;}
+        .grid-two{grid-template-columns:1fr;}
+        .timer-main{font-size:40px;}
+    }
+</style>
+</head>
+
+<body>
+<div class="container">
+
+    <h1>Tabata Timer V1.2</h1>
+
+    <!-- CURRENT TIMER -->
+    <div class="section">
+        <h2>Current Timer</h2>
+
+        <div class="timer-display">
+            <div id="statusLabel" class="timer-sub">READY</div>
+            <div id="timeDisplay" class="timer-main">00:20</div>
+            <div id="setInfo" class="timer-sub">Set 1 of 3</div>
+            <div id="exerciseLabel" class="timer-sub"><strong>Dumbbell Flat Bench Press</strong></div>
+        </div>
+
+        <div class="grid-two">
+            <div>
+                <label for="workSec">Work (sec)</label>
+                <input id="workSec" type="number" value="20" min="1">
+            </div>
+            <div>
+                <label for="restSec">Rest (sec)</label>
+                <input id="restSec" type="number" value="60" min="0">
+            </div>
+            <div>
+                <label for="setsCount">Sets</label>
+                <input id="setsCount" type="number" value="3" min="1">
+            </div>
+            <div>
+                <label for="prepSec">Prep (sec)</label>
+                <input id="prepSec" type="number" value="10" min="0">
+            </div>
+        </div>
+
+        <div class="buttons">
+            <button id="startBtn" class="primary">Start</button>
+            <button id="pauseBtn" class="secondary">Pause</button>
+            <button id="resetBtn" class="danger">Reset</button>
+        </div>
+
+        <div class="toggle-row">
+            <label><input type="checkbox" id="beepToggle" checked> Beep on</label>
+            &nbsp;&nbsp;
+            <label><input type="checkbox" id="voiceToggle" checked> Voice on</label>
+        </div>
+
+        <p class="center" style="color:#aab1b8;font-size:13px;margin-top:10px;">
+            Voice cues: “Right, Get Ready to Work”, set + exercise, “Work”, “Time for a Rest”, and “Great workout, you're all done”.
+        </p>
+    </div>
+
+    <!-- WORKOUT PLAN -->
+    <div class="section">
+        <h2>WORKOUT PLAN</h2>
+        <p class="center">Exercises by set</p>
+        <p class="center" style="color:#aab1b8;font-size:13px;">
+            During the workout, the app will announce the set and exercise name about 3 seconds before work begins.
+        </p>
+
+        <div id="planList"></div>
+
+        <div class="buttons">
+            <button id="addExerciseBtn" class="secondary">Add exercise</button>
+        </div>
+    </div>
+
+    <!-- MY WORKOUTS -->
+    <div class="section">
+        <h2>MY WORKOUTS</h2>
+        <p class="center">Saved timers</p>
+
+        <div class="grid-two" style="margin-top:10px;">
+            <div>
+                <label for="woName">Workout name</label>
+                <input id="woName" type="text" value="Strength Circuit">
+            </div>
+            <div>
+                <label for="woDesc">Description</label>
+                <input id="woDesc" type="text" value="Monday - Push (Chest/Shoulders/Triceps)">
+            </div>
+            <div>
+                <label for="woWork">Work (sec)</label>
+                <input id="woWork" type="number" value="120">
+            </div>
+            <div>
+                <label for="woRest">Rest (sec)</label>
+                <input id="woRest" type="number" value="60">
+            </div>
+            <div>
+                <label for="woSets">Sets</label>
+                <input id="woSets" type="number" value="3">
+            </div>
+            <div>
+                <label for="woPrep">Prep (sec)</label>
+                <input id="woPrep" type="number" value="10">
+            </div>
+            <div style="grid-column:1/-1;">
+                <label for="woExercises">Exercises (comma separated)</label>
+                <input id="woExercises" type="text" value="Dumbbell Flat Bench Press, Dumbbell Shoulder Press, Dumbbell Chest Fly">
+            </div>
+        </div>
+
+        <div class="buttons">
+            <button id="addWorkoutBtn" class="secondary">Add</button>
+            <button id="saveWorkoutBtn" class="primary">Save</button>
+        </div>
+
+        <div id="savedWorkouts" style="margin-top:14px;"></div>
+
+        <p class="center" style="color:#aab1b8;font-size:13px;margin-top:10px;">
+            Tabata Timer V1.2 • Runs in your browser
+        </p>
+    </div>
+
+</div>
+
+<script>
+(function(){
+    const $ = id => document.getElementById(id);
+
+    // STATE
+    let timerId = null;
+    let phase = "idle"; // idle, prep, work, rest
+    let remaining = 0;
+    let total = 0;
+    let currentSet = 1;
+    let totalSets = 3;
+    let currentExerciseIndex = 0;
+    let exercises = [
+        "Dumbbell Flat Bench Press",
+        "Dumbbell Shoulder Press",
+        "Dumbbell Chest Fly"
+    ];
+    let paused = false;
+
+    // RENDER PLAN LIST
+    function renderPlan(){
+        const list = $("planList");
+        list.innerHTML = "";
+        exercises.forEach((name, i) => {
+            const div = document.createElement("div");
+            div.className = "exercise-item";
+            const header = document.createElement("div");
+            header.className = "exercise-header";
+            const span = document.createElement("span");
+            span.className = "exercise-name";
+            span.textContent = (i+1) + " — " + name;
+            const btn = document.createElement("button");
+            btn.className = "danger";
+            btn.textContent = "Remove";
+            btn.onclick = () => {
+                exercises.splice(i,1);
+                renderPlan();
+            };
+            header.appendChild(span);
+            header.appendChild(btn);
+            div.appendChild(header);
+            list.appendChild(div);
+        });
+    }
+
+    renderPlan();
+
+    // BEEP + VOICE
+    function beep(freq=880, duration=0.12){
+        if(!$("beepToggle").checked) return;
+        try{
+            const C = window.AudioContext || window.webkitAudioContext;
+            if(!C) return;
+            const ctx = new C(), o = ctx.createOscillator(), g = ctx.createGain();
+            o.frequency.value = freq;
+            o.connect(g);
+            g.connect(ctx.destination);
+            g.gain.setValueAtTime(.001, ctx.currentTime);
+            g.gain.exponentialRampToValueAtTime(.18, ctx.currentTime + .01);
+            g.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + duration);
+            o.start();
+            o.stop(ctx.currentTime + duration + .02);
+        }catch(e){}
+    }
+
+    function speak(text){
+        if(!$("voiceToggle").checked) return;
+        if(!("speechSynthesis" in window)) return;
+        speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        u.rate = 0.95;
+        u.pitch = 1;
+        speechSynthesis.speak(u);
+    }
+
+    // DISPLAY
+    function updateDisplay(){
+        const mins = Math.floor(remaining/60);
+        const secs = remaining%60;
+        $("timeDisplay").textContent =
+            String(mins).padStart(2,"0") + ":" + String(secs).padStart(2,"0");
+        $("setInfo").textContent = `Set ${currentSet} of ${totalSets}`;
+        $("exerciseLabel").textContent = exercises[currentExerciseIndex] || "Exercise";
+    }
+
+    function setStatus(text){
+        $("statusLabel").textContent = text;
+    }
+
+    // PHASES
+    function startPhase(newPhase, seconds){
+        phase = newPhase;
+        total = seconds;
+        remaining = seconds;
+        if(newPhase === "prep"){
+            setStatus("GET READY");
+            speak("Right, Get Ready to Work");
+        } else if(newPhase === "work"){
+            setStatus("WORK");
+            speak(`Set ${currentSet} of ${totalSets}. ${exercises[currentExerciseIndex] || "Exercise"}. Work.`);
+        } else if(newPhase === "rest"){
+            setStatus("REST");
+            speak("Time for a Rest");
+        }
+        updateDisplay();
+        if(timerId) clearInterval(timerId);
+        timerId = setInterval(tick, 1000);
+    }
+
+    function tick(){
+        if(paused) return;
+        remaining = Math.max(0, remaining-1);
+        updateDisplay();
+
+        if(remaining === 3) beep(660);
+        if(remaining === 2) beep(740);
+        if(remaining === 1) beep(820);
+
+        if(remaining <= 0){
+            nextPhase();
+        }
+    }
+
+    function nextPhase(){
+        clearInterval(timerId);
+        const workSec = Number($("workSec").value) || 20;
+        const restSec = Number($("restSec").value) || 0;
+
+        if(phase === "prep"){
+            startPhase("work", workSec);
+            return;
+        }
+
+        if(phase === "work"){
+            if(restSec > 0){
+                startPhase("rest", restSec);
+            } else {
+                advanceSet();
+            }
+            return;
+        }
+
+        if(phase === "rest"){
+            advanceSet();
+        }
+    }
+
+    function advanceSet(){
+        if(currentSet < totalSets){
+            currentSet++;
+            currentExerciseIndex = (currentExerciseIndex+1) % exercises.length;
+            const workSec = Number($("workSec").value) || 20;
+            startPhase("work", workSec);
+        } else {
+            finishWorkout();
+        }
+    }
+
+    function finishWorkout(){
+        clearInterval(timerId);
+        phase = "idle";
+        setStatus("FINISHED");
+        $("timeDisplay").textContent = "00:00";
+        speak("Great workout, you're all done");
+    }
+
+    // BUTTONS
+    $("startBtn").onclick = () => {
+        totalSets = Math.max(1, Number($("setsCount").value) || 1);
+        currentSet = 1;
+        currentExerciseIndex = 0;
+        paused = false;
+        $("pauseBtn").textContent = "Pause";
+        const prepSec = Math.max(0, Number($("prepSec").value) || 0);
+        if(prepSec > 0){
+            startPhase("prep", prepSec);
+        } else {
+            const workSec = Number($("workSec").value) || 20;
+            startPhase("work", workSec);
+        }
+    };
+
+    $("pauseBtn").onclick = () => {
+        if(phase === "idle") return;
+        paused = !paused;
+        $("pauseBtn").textContent = paused ? "Resume" : "Pause";
+        setStatus(paused ? "PAUSED" : (phase === "work" ? "WORK" : phase === "rest" ? "REST" : "GET READY"));
+    };
+
+    $("resetBtn").onclick = () => {
+        clearInterval(timerId);
+        phase = "idle";
+        remaining = Number($("workSec").value) || 20;
+        currentSet = 1;
+        currentExerciseIndex = 0;
+        paused = false;
+        $("pauseBtn").textContent = "Pause";
+        setStatus("READY");
+        updateDisplay();
+    };
+
+    // ADD EXERCISE
+    $("addExerciseBtn").onclick = () => {
+        const name = prompt("Exercise name:");
+        if(name && name.trim()){
+            exercises.push(name.trim());
+            renderPlan();
+        }
+    };
+
+    // MY WORKOUTS
+    const saved = [];
+
+    function renderSaved(){
+        const container = $("savedWorkouts");
+        container.innerHTML = "";
+        saved.forEach((w, i) => {
+            const div = document.createElement("div");
+            div.className = "saved-item";
+            div.innerHTML =
+                `<strong>${w.name}</strong><br>` +
+                `${w.desc}<br>` +
+                `${w.work} sec work • ${w.rest} sec rest • ${w.sets} sets • ${w.exercises.length} exercises`;
+            const actions = document.createElement("div");
+            actions.className = "saved-actions";
+            const loadBtn = document.createElement("button");
+            loadBtn.className = "secondary";
+            loadBtn.textContent = "Load";
+            loadBtn.onclick = () => {
+                $("workSec").value = w.work;
+                $("restSec").value = w.rest;
+                $("setsCount").value = w.sets;
+                $("prepSec").value = w.prep;
+                exercises = w.exercises.slice();
+                renderPlan();
+            };
+            const delBtn = document.createElement("button");
+            delBtn.className = "danger";
+            delBtn.textContent = "Delete";
+            delBtn.onclick = () => {
+                saved.splice(i,1);
+                renderSaved();
+            };
+            actions.appendChild(loadBtn);
+            actions.appendChild(delBtn);
+            div.appendChild(actions);
+            container.appendChild(div);
+        });
+    }
+
+    $("addWorkoutBtn").onclick = () => {
+        $("woName").value = "";
+        $("woDesc").value = "";
+        $("woWork").value = $("workSec").value;
+        $("woRest").value = $("restSec").value;
+        $("woSets").value = $("setsCount").value;
+        $("woPrep").value = $("prepSec").value;
+        $("woExercises").value = exercises.join(", ");
+    };
+
+    $("saveWorkoutBtn").onclick = () => {
+        const name = $("woName").value.trim() || "Custom Workout";
+        const desc = $("woDesc").value.trim() || "";
+        const work = Number($("woWork").value) || 20;
+        const rest = Number($("woRest").value) || 0;
+        const sets = Number($("woSets").value) || 1;
+        const prep = Number($("woPrep").value) || 0;
+        const exList = $("woExercises").value.split(",").map(s => s.trim()).filter(Boolean);
+        if(!exList.length){
+            alert("Please add at least one exercise.");
+            return;
+        }
+        saved.push({name, desc, work, rest, sets, prep, exercises: exList});
+        renderSaved();
+    };
+
+    // INITIAL RESET DISPLAY
+    remaining = Number($("workSec").value) || 20;
+    updateDisplay();
+})();
+</script>
+
+</body>
+</html>
